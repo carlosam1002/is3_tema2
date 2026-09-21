@@ -7,33 +7,52 @@ import re
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 from . import __version__
+from .adaptadores.academico import SistemaAcademicoSimulado
 from .adaptadores.sso import DirectorioSimulado
 from .auditoria import RegistroAuditoria
+from .consultas import ServicioConsultas
 from .errores import ErrorPortal
 from .identidad import ServicioIdentidad
+from .perfil import ServicioPerfil
 
 
 class Portal:
     """Punto unico de composicion: aqui se conectan servicios y adaptadores."""
 
-    def __init__(self, directorio=None):
+    def __init__(self, directorio=None, academico=None):
         self.version = __version__
         self.auditoria = RegistroAuditoria()
         self.identidad = ServicioIdentidad(directorio or DirectorioSimulado(), self.auditoria)
+        academico = academico or SistemaAcademicoSimulado()
+        self.perfil = ServicioPerfil(academico, self.auditoria)
+        self.consultas = ServicioConsultas(academico)
 
     def salud(self):
         return {"estado": "ok", "version": self.version}
 
 
+def _campos(c, *nombres):
+    return {k: c["json"][k] for k in nombres if k in c["json"]}
+
+
 def construir_rutas(p):
     """Tabla de rutas: (metodo, patron, funcion(ctx) -> respuesta)."""
     idn = p.identidad
+
+    def u(c):  # usuario autenticado
+        return idn.usuario(c["token"])["usuario"]
+
     return [
         ("GET", r"/salud", lambda c: p.salud()),
         # I1 - identidad
         ("POST", r"/api/sesion", lambda c: {"token": idn.iniciar_sesion(c["json"].get("usuario"), c["json"].get("clave"))}),
         ("GET", r"/api/sesion", lambda c: idn.usuario(c["token"])),
         ("POST", r"/api/sesion/cerrar", lambda c: idn.cerrar_sesion(c["token"]) or {"cerrada": True}),
+        # I1 - perfil y consultas
+        ("GET", r"/api/perfil", lambda c: p.perfil.consultar(u(c))),
+        ("PUT", r"/api/perfil/contacto", lambda c: p.perfil.actualizar_contacto(u(c), **_campos(c, "telefono", "correo_alternativo"))),
+        ("GET", r"/api/consultas/(?P<recurso>calificaciones|horario|historial|inscripcion)",
+         lambda c: getattr(p.consultas, c["params"]["recurso"])(u(c))),
     ]
 
 
