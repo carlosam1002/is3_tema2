@@ -40,10 +40,18 @@ class Portal:
         self.correo = correo or ProveedorCorreoSimulado()
         self.notificaciones = ServicioNotificaciones(
             self.correo, lambda usuario: academico.estudiante(usuario)["correo_institucional"])
+        self.solicitudes.suscribir(self._notificar_cambio_de_estado)
         # I3 - pagos
         self.pasarela = pasarela or PasarelaSimulada()
         self.pagos = ServicioPagos(self.pasarela, arancelario or SistemaArancelarioSimulado(),
                                    self.notificaciones, self.auditoria)
+
+    def _notificar_cambio_de_estado(self, solicitud, estado):
+        if solicitud["usuario"] == solicitud["linea_tiempo"][-1]["por"]:
+            return  # el propio estudiante hizo el cambio (p. ej., cancelacion)
+        self.notificaciones.notificar(
+            solicitud["usuario"], "solicitud_estado", f"Solicitud {solicitud['id']}: {estado.replace('_', ' ')}",
+            f"Tu solicitud ({solicitud['tramite']}, expediente {solicitud['expediente']}) cambió a '{estado}'.")
 
     def salud(self):
         return {"estado": "ok", "version": self.version}
@@ -93,6 +101,7 @@ def construir_rutas(p):
         ("POST", r"/api/solicitudes/(?P<id>\d+)/estado", lambda c: p.solicitudes.cambiar_estado(
             f(c), c["params"]["id"], c["json"].get("estado"), c["json"].get("observacion"))),
         ("GET", r"/api/bandeja", lambda c: f(c) and p.solicitudes.bandeja()),
+        ("POST", r"/api/solicitudes/(?P<id>\d+)/cancelar", lambda c: p.solicitudes.cancelar(u(c), c["params"]["id"])),
         # I3 - notificaciones
         ("GET", r"/api/notificaciones", lambda c: p.notificaciones.bandeja(u(c))),
         ("PUT", r"/api/notificaciones/preferencias", lambda c: p.notificaciones.actualizar_preferencias(

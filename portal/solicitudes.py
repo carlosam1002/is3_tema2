@@ -3,6 +3,8 @@
 Funciones: catalogo (F2.01, F2.10), crear solicitud con adjuntos (F2.02, F2.03, F2.08, F2.09),
 consulta y linea de tiempo (F2.04, F2.05), gestion por funcionarios (F2.06, F2.07),
 integracion con expedientes (F2.11), comprobante PDF (F2.12) y bandeja con plazos (F2.13).
+Incremento 3: publica eventos de cambio de estado (para notificaciones) y permite cancelar
+(F2.14, movido desde I2 por RCA-02).
 """
 import itertools
 import time
@@ -20,7 +22,9 @@ TRANSICIONES = {
     "observada": {"en_revision"},
     "resuelta": set(),
     "rechazada": set(),
+    "cancelada": set(),
 }
+CANCELABLES = {"recibida", "observada"}
 
 CATALOGO = [
     {"codigo": "CONST-AR", "nombre": "Constancia de alumno regular", "plazo_dias": 2, "requiere_adjunto": False},
@@ -39,6 +43,11 @@ class ServicioSolicitudes:
         self._catalogo = {t["codigo"]: dict(t) for t in (catalogo or CATALOGO)}
         self._solicitudes = {}
         self._ids = itertools.count(1)
+        self._suscriptores = []
+
+    def suscribir(self, funcion):
+        """Registra funcion(solicitud, nuevo_estado) para cada cambio de estado."""
+        self._suscriptores.append(funcion)
 
     # ---- catalogo
     def catalogo(self):
@@ -89,9 +98,17 @@ class ServicioSolicitudes:
             raise DatosInvalidos(f"Transición no permitida: {s['estado']} -> {nuevo}")
         if nuevo in ("observada", "rechazada") and not observacion:
             raise DatosInvalidos("Debe registrar una observación")
-        s["estado"] = nuevo
-        self._registrar_evento(s, nuevo, funcionario, observacion)
-        self._auditoria.registrar(funcionario, "solicitud_estado", (sid, nuevo))
+        self._aplicar(s, nuevo, funcionario, observacion)
+        return self._vista(s)
+
+    def cancelar(self, usuario, sid):
+        """F2.14: el estudiante cancela su solicitud mientras no este en revision."""
+        s = self._obtener(sid)
+        if s["usuario"] != usuario:
+            raise NoAutorizado("La solicitud pertenece a otro usuario")
+        if s["estado"] not in CANCELABLES:
+            raise DatosInvalidos(f"No se puede cancelar una solicitud en estado '{s['estado']}'")
+        self._aplicar(s, "cancelada", usuario, "Cancelada por el estudiante")
         return self._vista(s)
 
     def bandeja(self):
@@ -101,6 +118,9 @@ class ServicioSolicitudes:
         return [dict(self._vista(s), dias_restantes=round((s["vence"] - ahora) / DIA, 1),
                      vencida=s["vence"] < ahora)
                 for s in sorted(pendientes, key=lambda s: s["vence"])]
+
+    def todas(self):
+        return [self._vista(s) for s in self._solicitudes.values()]
 
     def reintentar_expedientes(self):
         """Contingencia: asigna expediente a solicitudes registradas durante una caida."""
@@ -123,6 +143,13 @@ class ServicioSolicitudes:
             s["expediente"] = self._expedientes.registrar(s["tramite"], s["usuario"], s["descripcion"][:80])
         except ConnectionError:
             s["expediente"] = None  # se reintenta luego; la solicitud no se pierde
+
+    def _aplicar(self, s, nuevo, por, observacion):
+        s["estado"] = nuevo
+        self._registrar_evento(s, nuevo, por, observacion)
+        self._auditoria.registrar(por, "solicitud_estado", (s["id"], nuevo))
+        for funcion in self._suscriptores:
+            funcion(self._vista(s), nuevo)
 
     def _registrar_evento(self, s, estado, por, observacion=None):
         s["linea_tiempo"].append({"momento": self._reloj(), "estado": estado, "por": por, "observacion": observacion})
