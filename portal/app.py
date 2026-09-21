@@ -1,0 +1,79 @@
+"""Fachada del portal y API HTTP (solo biblioteca estandar).
+
+Ejecutar:  python -m portal.app  (escucha en http://127.0.0.1:8080)
+"""
+import json
+import re
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+
+from . import __version__
+from .errores import ErrorPortal
+
+
+class Portal:
+    """Punto unico de composicion: aqui se conectan servicios y adaptadores."""
+
+    def __init__(self):
+        self.version = __version__
+
+    def salud(self):
+        return {"estado": "ok", "version": self.version}
+
+
+def construir_rutas(p):
+    """Tabla de rutas: (metodo, patron, funcion(ctx) -> respuesta)."""
+    return [
+        ("GET", r"/salud", lambda c: p.salud()),
+    ]
+
+
+def crear_servidor(portal=None, host="127.0.0.1", puerto=8080):
+    portal = portal or Portal()
+    rutas = [(m, re.compile(f"^{patron}$"), fn) for m, patron, fn in construir_rutas(portal)]
+
+    class Manejador(BaseHTTPRequestHandler):
+        def _despachar(self, metodo):
+            for m, patron, fn in rutas:
+                coincide = patron.match(self.path.split("?")[0])
+                if m == metodo and coincide:
+                    largo = int(self.headers.get("Content-Length") or 0)
+                    cuerpo = json.loads(self.rfile.read(largo) or b"{}") if largo else {}
+                    auth = self.headers.get("Authorization", "")
+                    ctx = {"params": coincide.groupdict(), "json": cuerpo,
+                           "token": auth[7:] if auth.startswith("Bearer ") else None}
+                    try:
+                        return self._responder(200, fn(ctx))
+                    except ErrorPortal as e:
+                        return self._responder(e.codigo_http, {"error": str(e)})
+            return self._responder(404, {"error": "ruta no encontrada"})
+
+        def _responder(self, codigo, datos):
+            if isinstance(datos, (bytes, bytearray)):
+                cuerpo, tipo = bytes(datos), "application/pdf"
+            else:
+                cuerpo, tipo = json.dumps(datos, ensure_ascii=False).encode(), "application/json; charset=utf-8"
+            self.send_response(codigo)
+            self.send_header("Content-Type", tipo)
+            self.send_header("Content-Length", str(len(cuerpo)))
+            self.end_headers()
+            self.wfile.write(cuerpo)
+
+        def do_GET(self):
+            self._despachar("GET")
+
+        def do_POST(self):
+            self._despachar("POST")
+
+        def do_PUT(self):
+            self._despachar("PUT")
+
+        def log_message(self, *args):
+            pass
+
+    return ThreadingHTTPServer((host, puerto), Manejador)
+
+
+if __name__ == "__main__":
+    srv = crear_servidor()
+    print(f"Portal {__version__} en http://{srv.server_address[0]}:{srv.server_address[1]}")
+    srv.serve_forever()

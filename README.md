@@ -1,0 +1,46 @@
+# Portal de Servicios Estudiantiles
+
+Prototipo verificable del **TP 2 — Enfoque Incremental** (Ingeniería de Software III, LCIK).
+El repositorio materializa el plan de releases del informe: cada incremento es una
+versión desplegable, etiquetada y probada junto con todo lo entregado antes.
+
+## Plan de releases
+
+| Release | Incremento | Capacidad nueva | Estado |
+|---|---|---|---|
+| `v1.0.0` | I1 | Autenticación SSO, perfil y consultas académicas | Planificado |
+| `v1.1.0` | I2 | Solicitudes de trámites y seguimiento | Planificado |
+| `v1.2.0` | I3 | Pagos, notificaciones y reportes | Planificado |
+
+Detalle de componentes nuevos y afectados por versión: [`docs/mapa-de-versiones.md`](docs/mapa-de-versiones.md).
+Movimientos de alcance entre incrementos: [`docs/registro-cambios-alcance.md`](docs/registro-cambios-alcance.md).
+
+## Cómo ejecutar
+
+Requiere Python 3.10 o superior. No tiene dependencias externas.
+
+```bash
+python -m unittest discover -s tests -t . -v   # suite completa (regresión acumulativa)
+python tools/estimacion.py                     # reproduce las estimaciones del informe
+python -m portal.app                           # API en http://127.0.0.1:8080/salud
+```
+
+Para ver una versión concreta: `git checkout v1.0.0` (o `v1.1.0`, `v1.2.0`) y ejecutar las pruebas.
+
+## Estrategia de ramas y versionado
+
+- `main` contiene siempre la última versión liberable; cada release se marca con una etiqueta anotada `vMAYOR.MENOR.PARCHE` (versionado semántico).
+- Cada funcionalidad se desarrolla en una rama `feature/<incremento>-<tema>` y se integra en `main` mediante merge sin fast-forward, para conservar la trazabilidad.
+- El pipeline (`.github/workflows/ci.yml`) compila y prueba el **producto completo** en cada push; en las etiquetas verifica que la versión del código coincide con la etiqueta y publica el artefacto.
+- Rollback: se vuelve a desplegar el artefacto de la etiqueta anterior (`git checkout vX.Y.Z`).
+
+## Usuarios de prueba (servicios simulados)
+
+| Usuario | Clave | Rol |
+|---|---|---|
+| `est001` | `clave-est001` | estudiante |
+| `est002` | `clave-est002` | estudiante |
+| `fun001` | `clave-fun001` | funcionario |
+
+Los servicios institucionales (SSO, sistema académico, etc.) se simulan en memoria
+mediante adaptadores que respetan el contrato de interfaz; no contienen datos reales.

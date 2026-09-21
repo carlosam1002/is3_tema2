@@ -1,0 +1,53 @@
+# Pipeline de integracion continua del Portal de Servicios Estudiantiles.
+# Compila y prueba el PRODUCTO COMPLETO (todas las funciones de todos los
+# incrementos entregados), no solo el codigo del incremento nuevo.
+name: CI
+
+on:
+  push:
+    branches: [main, "feature/**", "release/**"]
+    tags: ["v*.*.*"]
+  pull_request:
+    branches: [main]
+
+jobs:
+  construir-y-probar:
+    name: Construir y probar (Python ${{ matrix.python }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: ["3.10", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Compilar todo el producto
+        run: python -m compileall -q portal tools tests
+      - name: Pruebas unitarias, de contrato y regresion acumulativa
+        run: python -m unittest discover -s tests -t . -v
+      - name: Reproducir estimaciones del plan
+        run: python tools/estimacion.py
+
+  release:
+    name: Publicar artefacto de release
+    needs: construir-y-probar
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Verificar que la etiqueta coincide con la version del codigo
+        run: |
+          VERSION_CODIGO=$(python -c "import portal; print(portal.__version__)")
+          test "v${VERSION_CODIGO}" = "${GITHUB_REF_NAME}" || { echo "Etiqueta ${GITHUB_REF_NAME} != v${VERSION_CODIGO}"; exit 1; }
+      - name: Empaquetar
+        run: |
+          mkdir -p dist
+          zip -r "dist/portal-${GITHUB_REF_NAME}.zip" portal README.md CHANGELOG.md
+      - uses: actions/upload-artifact@v4
+        with:
+          name: portal-${{ github.ref_name }}
+          path: dist/
