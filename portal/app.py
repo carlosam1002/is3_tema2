@@ -9,11 +9,13 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from . import __version__
 from .adaptadores.academico import SistemaAcademicoSimulado
 from .adaptadores.expedientes import ExpedientesSimulado
+from .adaptadores.proveedor_correo import ProveedorCorreoSimulado
 from .adaptadores.sso import DirectorioSimulado
 from .auditoria import RegistroAuditoria
 from .consultas import ServicioConsultas
 from .errores import ErrorPortal
 from .identidad import ServicioIdentidad
+from .notificaciones import ServicioNotificaciones
 from .perfil import ServicioPerfil
 from .solicitudes import ServicioSolicitudes
 
@@ -21,7 +23,7 @@ from .solicitudes import ServicioSolicitudes
 class Portal:
     """Punto unico de composicion: aqui se conectan servicios y adaptadores."""
 
-    def __init__(self, directorio=None, academico=None, expedientes=None):
+    def __init__(self, directorio=None, academico=None, expedientes=None, correo=None):
         self.version = __version__
         self.auditoria = RegistroAuditoria()
         self.identidad = ServicioIdentidad(directorio or DirectorioSimulado(), self.auditoria)
@@ -30,6 +32,10 @@ class Portal:
         self.consultas = ServicioConsultas(academico)
         self.expedientes = expedientes or ExpedientesSimulado()
         self.solicitudes = ServicioSolicitudes(self.expedientes, self.auditoria)
+        # I3 - notificaciones (servicio comun para solicitudes y pagos, decision DEC-09)
+        self.correo = correo or ProveedorCorreoSimulado()
+        self.notificaciones = ServicioNotificaciones(
+            self.correo, lambda usuario: academico.estudiante(usuario)["correo_institucional"])
 
     def salud(self):
         return {"estado": "ok", "version": self.version}
@@ -74,6 +80,11 @@ def construir_rutas(p):
         ("POST", r"/api/solicitudes/(?P<id>\d+)/estado", lambda c: p.solicitudes.cambiar_estado(
             f(c), c["params"]["id"], c["json"].get("estado"), c["json"].get("observacion"))),
         ("GET", r"/api/bandeja", lambda c: f(c) and p.solicitudes.bandeja()),
+        # I3 - notificaciones
+        ("GET", r"/api/notificaciones", lambda c: p.notificaciones.bandeja(u(c))),
+        ("PUT", r"/api/notificaciones/preferencias", lambda c: p.notificaciones.actualizar_preferencias(
+            u(c), **_campos(c, "correo", "tipos"))),
+        ("POST", r"/api/notificaciones/(?P<id>\d+)/leida", lambda c: p.notificaciones.marcar_leida(u(c), c["params"]["id"])),
     ]
 
 
