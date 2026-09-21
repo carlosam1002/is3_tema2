@@ -6,6 +6,7 @@ adaptadores reales en el ambiente de integracion (misma suite, otro adaptador).
 import unittest
 
 from portal.adaptadores.academico import SistemaAcademicoSimulado
+from portal.adaptadores.expedientes import ExpedientesSimulado
 from portal.adaptadores.sso import DirectorioSimulado
 
 
@@ -37,6 +38,20 @@ class ContratoAcademico(unittest.TestCase):
     def test_usuario_inexistente_lanza_keyerror(self):
         with self.assertRaises(KeyError):
             self.adaptador().estudiante("no-existe")
+
+
+class ContratoExpedientes(unittest.TestCase):
+    adaptador = ExpedientesSimulado
+
+    def test_numero_con_formato_acordado(self):
+        numero = self.adaptador().registrar("CONST-AR", "est001", "resumen")
+        self.assertRegex(numero, r"^EXP-\d{4}-\d{6}$")
+
+    def test_no_disponible_lanza_connectionerror(self):
+        a = self.adaptador()
+        a.disponible = False
+        with self.assertRaises(ConnectionError):
+            a.registrar("CONST-AR", "est001", "resumen")
 
 
 if __name__ == "__main__":
