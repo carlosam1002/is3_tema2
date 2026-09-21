@@ -2,6 +2,23 @@
 
 Formato basado en *Keep a Changelog*; versionado semántico.
 
+## [1.1.0] - Incremento 2: solicitudes y seguimiento
+
+### Agregado
+- Catálogo de trámites (F2.01, F2.10).
+- Creación de solicitudes con adjuntos validados (PDF/JPG/PNG, máximo 5 MB) (F2.02, F2.03).
+- Consulta de solicitudes propias y línea de tiempo de estados (F2.04, F2.05).
+- Gestión por funcionarios: cambio de estado, derivación y observaciones (F2.06, F2.07).
+- Integración con el sistema de expedientes, con reintento ante indisponibilidad (F2.11).
+- Comprobante de solicitud en PDF y bandeja con control de plazos (F2.12, F2.13).
+- Alcance movido desde I1 (RCA-01): preferencias del usuario (F1.12) e historial en PDF (F1.13).
+
+### Movido (RCA-02)
+- F2.14 Cancelar solicitud pasa a I3 (alcance *Could*).
+
+### Compatibilidad
+- Las rutas de la API de v1.0.0 no cambian; el perfil agrega el campo `preferencias` (cambio compatible, por eso sube la versión MENOR).
+
 ## [1.0.0] - Incremento 1: autenticación, perfil y consultas
 
 ### Agregado

@@ -9,7 +9,7 @@ versión desplegable, etiquetada y probada junto con todo lo entregado antes.
 | Release | Incremento | Capacidad nueva | Estado |
 |---|---|---|---|
 | `v1.0.0` | I1 | Autenticación SSO, perfil y consultas académicas | Liberado |
-| `v1.1.0` | I2 | Solicitudes de trámites y seguimiento | Planificado |
+| `v1.1.0` | I2 | Solicitudes de trámites y seguimiento | Liberado |
 | `v1.2.0` | I3 | Pagos, notificaciones y reportes | Planificado |
 
 Detalle de componentes nuevos y afectados por versión: [`docs/mapa-de-versiones.md`](docs/mapa-de-versiones.md).
@@ -29,7 +29,8 @@ Para ver una versión concreta: `git checkout v1.0.0` (o `v1.1.0`, `v1.2.0`) y e
 
 ## Estrategia de ramas y versionado
 
-- `main` contiene siempre la última versión liberable; cada release se marca con una etiqueta anotada `vMAYOR.MENOR.PARCHE` (versionado semántico).
+- `main` contiene siempre la última versión liberable; cada release se marca con una etiqueta anotada `vMAYOR.MENOR.PARCHE` (versionado semántico 2.0.0).
+- Como cada incremento agrega capacidad **sin romper** la API ya entregada, los incrementos incrementan la versión MENOR (`v1.0.0` → `v1.1.0` → `v1.2.0`); una versión MAYOR solo se usaría ante un cambio incompatible y las correcciones incrementan el PARCHE.
 - Cada funcionalidad se desarrolla en una rama `feature/<incremento>-<tema>` y se integra en `main` mediante merge sin fast-forward, para conservar la trazabilidad.
 - El pipeline (`.github/workflows/ci.yml`) compila y prueba el **producto completo** en cada push; en las etiquetas verifica que la versión del código coincide con la etiqueta y publica el artefacto.
 - Rollback: se vuelve a desplegar el artefacto de la etiqueta anterior (`git checkout vX.Y.Z`).
