@@ -8,7 +8,9 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 from . import __version__
 from .adaptadores.academico import SistemaAcademicoSimulado
+from .adaptadores.arancelario import SistemaArancelarioSimulado
 from .adaptadores.expedientes import ExpedientesSimulado
+from .adaptadores.pasarela import PasarelaSimulada
 from .adaptadores.proveedor_correo import ProveedorCorreoSimulado
 from .adaptadores.sso import DirectorioSimulado
 from .auditoria import RegistroAuditoria
@@ -16,6 +18,7 @@ from .consultas import ServicioConsultas
 from .errores import ErrorPortal
 from .identidad import ServicioIdentidad
 from .notificaciones import ServicioNotificaciones
+from .pagos import ServicioPagos
 from .perfil import ServicioPerfil
 from .solicitudes import ServicioSolicitudes
 
@@ -23,7 +26,8 @@ from .solicitudes import ServicioSolicitudes
 class Portal:
     """Punto unico de composicion: aqui se conectan servicios y adaptadores."""
 
-    def __init__(self, directorio=None, academico=None, expedientes=None, correo=None):
+    def __init__(self, directorio=None, academico=None, expedientes=None, correo=None,
+                 pasarela=None, arancelario=None):
         self.version = __version__
         self.auditoria = RegistroAuditoria()
         self.identidad = ServicioIdentidad(directorio or DirectorioSimulado(), self.auditoria)
@@ -36,6 +40,10 @@ class Portal:
         self.correo = correo or ProveedorCorreoSimulado()
         self.notificaciones = ServicioNotificaciones(
             self.correo, lambda usuario: academico.estudiante(usuario)["correo_institucional"])
+        # I3 - pagos
+        self.pasarela = pasarela or PasarelaSimulada()
+        self.pagos = ServicioPagos(self.pasarela, arancelario or SistemaArancelarioSimulado(),
+                                   self.notificaciones, self.auditoria)
 
     def salud(self):
         return {"estado": "ok", "version": self.version}
@@ -43,6 +51,11 @@ class Portal:
 
 def _campos(c, *nombres):
     return {k: c["json"][k] for k in nombres if k in c["json"]}
+
+
+def _publico(transaccion):
+    """Respuesta minima al callback publico de la pasarela (no expone datos del estudiante)."""
+    return {"referencia": transaccion["referencia"], "estado": transaccion["estado"]}
 
 
 def construir_rutas(p):
@@ -84,6 +97,12 @@ def construir_rutas(p):
         ("GET", r"/api/notificaciones", lambda c: p.notificaciones.bandeja(u(c))),
         ("PUT", r"/api/notificaciones/preferencias", lambda c: p.notificaciones.actualizar_preferencias(
             u(c), **_campos(c, "correo", "tipos"))),
+        # I3 - pagos
+        ("GET", r"/api/pagos/estado-cuenta", lambda c: p.pagos.estado_cuenta(u(c))),
+        ("POST", r"/api/pagos", lambda c: p.pagos.iniciar_pago(u(c), c["json"].get("id_deuda"))),
+        ("POST", r"/api/pagos/confirmacion", lambda c: _publico(p.pagos.confirmar(c["json"]))),
+        ("GET", r"/api/pagos", lambda c: p.pagos.historial(u(c))),
+        ("GET", r"/api/pagos/(?P<ref>PAG-\d+)/comprobante.pdf", lambda c: p.pagos.comprobante_pdf(u(c), c["params"]["ref"])),
         ("POST", r"/api/notificaciones/(?P<id>\d+)/leida", lambda c: p.notificaciones.marcar_leida(u(c), c["params"]["id"])),
     ]
 
