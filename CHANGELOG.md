@@ -2,6 +2,22 @@
 
 Formato basado en *Keep a Changelog*; versionado semántico.
 
+## [1.2.0] - Incremento 3: pagos, notificaciones y reportes
+
+### Agregado
+- Servicio común de notificaciones por correo, con preferencias y bandeja en el portal (F3.06, F3.08, F3.10, F3.12, F3.13).
+- Estado de cuenta, pago en línea mediante pasarela con confirmación firmada e idempotente, comprobante e historial (F3.01–F3.05, F3.07, F3.09, F3.11).
+- Notificación automática de cada cambio de estado de una solicitud.
+- Cancelación de solicitudes por el estudiante (F2.14, movido desde I2 por RCA-02).
+- Reportes de trámites por estado y tiempos, y de recaudación (F3.14, F3.15).
+- Pruebas de contrato de pasarela, sistema arancelario y proveedor de correo.
+
+### Movido (RCA-03)
+- F3.16 Reporte de uso del portal pasa a v1.3.0 (alcance *Could*).
+
+### Seguridad
+- El portal no recibe ni almacena datos de tarjetas; la confirmación de pago se valida con firma HMAC.
+
 ## [1.1.0] - Incremento 2: solicitudes y seguimiento
 
 ### Agregado
