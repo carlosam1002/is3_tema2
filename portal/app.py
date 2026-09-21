@@ -20,6 +20,7 @@ from .identidad import ServicioIdentidad
 from .notificaciones import ServicioNotificaciones
 from .pagos import ServicioPagos
 from .perfil import ServicioPerfil
+from .reportes import ServicioReportes
 from .solicitudes import ServicioSolicitudes
 
 
@@ -45,6 +46,8 @@ class Portal:
         self.pasarela = pasarela or PasarelaSimulada()
         self.pagos = ServicioPagos(self.pasarela, arancelario or SistemaArancelarioSimulado(),
                                    self.notificaciones, self.auditoria)
+        # I3 - reportes
+        self.reportes = ServicioReportes(self.solicitudes, self.pagos)
 
     def _notificar_cambio_de_estado(self, solicitud, estado):
         if solicitud["usuario"] == solicitud["linea_tiempo"][-1]["por"]:
@@ -112,6 +115,9 @@ def construir_rutas(p):
         ("POST", r"/api/pagos/confirmacion", lambda c: _publico(p.pagos.confirmar(c["json"]))),
         ("GET", r"/api/pagos", lambda c: p.pagos.historial(u(c))),
         ("GET", r"/api/pagos/(?P<ref>PAG-\d+)/comprobante.pdf", lambda c: p.pagos.comprobante_pdf(u(c), c["params"]["ref"])),
+        # I3 - reportes (solo funcionarios)
+        ("GET", r"/api/reportes/tramites", lambda c: f(c) and p.reportes.tramites()),
+        ("GET", r"/api/reportes/recaudacion", lambda c: f(c) and p.reportes.recaudacion()),
         ("POST", r"/api/notificaciones/(?P<id>\d+)/leida", lambda c: p.notificaciones.marcar_leida(u(c), c["params"]["id"])),
     ]
 
