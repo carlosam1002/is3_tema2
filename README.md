@@ -8,7 +8,7 @@ versión desplegable, etiquetada y probada junto con todo lo entregado antes.
 
 | Release | Incremento | Capacidad nueva | Estado |
 |---|---|---|---|
-| `v1.0.0` | I1 | Autenticación SSO, perfil y consultas académicas | Planificado |
+| `v1.0.0` | I1 | Autenticación SSO, perfil y consultas académicas | Liberado |
 | `v1.1.0` | I2 | Solicitudes de trámites y seguimiento | Planificado |
 | `v1.2.0` | I3 | Pagos, notificaciones y reportes | Planificado |
 
