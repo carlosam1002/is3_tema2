@@ -53,6 +53,9 @@ def construir_rutas(p):
         ("PUT", r"/api/perfil/contacto", lambda c: p.perfil.actualizar_contacto(u(c), **_campos(c, "telefono", "correo_alternativo"))),
         ("GET", r"/api/consultas/(?P<recurso>calificaciones|horario|historial|inscripcion)",
          lambda c: getattr(p.consultas, c["params"]["recurso"])(u(c))),
+        # I2 - alcance movido desde I1 (RCA-01)
+        ("PUT", r"/api/perfil/preferencias", lambda c: p.perfil.actualizar_preferencias(u(c), **_campos(c, "idioma", "vista_inicio"))),
+        ("GET", r"/api/consultas/historial.pdf", lambda c: p.consultas.historial_pdf(u(c))),
     ]
 
 
