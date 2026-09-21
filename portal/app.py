@@ -7,14 +7,19 @@ import re
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 from . import __version__
+from .adaptadores.sso import DirectorioSimulado
+from .auditoria import RegistroAuditoria
 from .errores import ErrorPortal
+from .identidad import ServicioIdentidad
 
 
 class Portal:
     """Punto unico de composicion: aqui se conectan servicios y adaptadores."""
 
-    def __init__(self):
+    def __init__(self, directorio=None):
         self.version = __version__
+        self.auditoria = RegistroAuditoria()
+        self.identidad = ServicioIdentidad(directorio or DirectorioSimulado(), self.auditoria)
 
     def salud(self):
         return {"estado": "ok", "version": self.version}
@@ -22,8 +27,13 @@ class Portal:
 
 def construir_rutas(p):
     """Tabla de rutas: (metodo, patron, funcion(ctx) -> respuesta)."""
+    idn = p.identidad
     return [
         ("GET", r"/salud", lambda c: p.salud()),
+        # I1 - identidad
+        ("POST", r"/api/sesion", lambda c: {"token": idn.iniciar_sesion(c["json"].get("usuario"), c["json"].get("clave"))}),
+        ("GET", r"/api/sesion", lambda c: idn.usuario(c["token"])),
+        ("POST", r"/api/sesion/cerrar", lambda c: idn.cerrar_sesion(c["token"]) or {"cerrada": True}),
     ]
 
 
