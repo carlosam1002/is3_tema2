@@ -8,24 +8,28 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 from . import __version__
 from .adaptadores.academico import SistemaAcademicoSimulado
+from .adaptadores.expedientes import ExpedientesSimulado
 from .adaptadores.sso import DirectorioSimulado
 from .auditoria import RegistroAuditoria
 from .consultas import ServicioConsultas
 from .errores import ErrorPortal
 from .identidad import ServicioIdentidad
 from .perfil import ServicioPerfil
+from .solicitudes import ServicioSolicitudes
 
 
 class Portal:
     """Punto unico de composicion: aqui se conectan servicios y adaptadores."""
 
-    def __init__(self, directorio=None, academico=None):
+    def __init__(self, directorio=None, academico=None, expedientes=None):
         self.version = __version__
         self.auditoria = RegistroAuditoria()
         self.identidad = ServicioIdentidad(directorio or DirectorioSimulado(), self.auditoria)
         academico = academico or SistemaAcademicoSimulado()
         self.perfil = ServicioPerfil(academico, self.auditoria)
         self.consultas = ServicioConsultas(academico)
+        self.expedientes = expedientes or ExpedientesSimulado()
+        self.solicitudes = ServicioSolicitudes(self.expedientes, self.auditoria)
 
     def salud(self):
         return {"estado": "ok", "version": self.version}
@@ -42,6 +46,9 @@ def construir_rutas(p):
     def u(c):  # usuario autenticado
         return idn.usuario(c["token"])["usuario"]
 
+    def f(c):  # funcionario autenticado
+        return idn.exigir_rol(c["token"], "funcionario")["usuario"]
+
     return [
         ("GET", r"/salud", lambda c: p.salud()),
         # I1 - identidad
@@ -56,6 +63,17 @@ def construir_rutas(p):
         # I2 - alcance movido desde I1 (RCA-01)
         ("PUT", r"/api/perfil/preferencias", lambda c: p.perfil.actualizar_preferencias(u(c), **_campos(c, "idioma", "vista_inicio"))),
         ("GET", r"/api/consultas/historial.pdf", lambda c: p.consultas.historial_pdf(u(c))),
+        # I2 - solicitudes y seguimiento
+        ("GET", r"/api/tramites", lambda c: p.solicitudes.catalogo()),
+        ("POST", r"/api/solicitudes", lambda c: p.solicitudes.crear(
+            u(c), c["json"].get("tramite"), c["json"].get("descripcion"), c["json"].get("adjuntos", []))),
+        ("GET", r"/api/solicitudes", lambda c: p.solicitudes.mis_solicitudes(u(c))),
+        ("GET", r"/api/solicitudes/(?P<id>\d+)", lambda c: p.solicitudes.detalle(
+            u(c), c["params"]["id"], idn.usuario(c["token"])["rol"])),
+        ("GET", r"/api/solicitudes/(?P<id>\d+)/comprobante.pdf", lambda c: p.solicitudes.comprobante_pdf(u(c), c["params"]["id"])),
+        ("POST", r"/api/solicitudes/(?P<id>\d+)/estado", lambda c: p.solicitudes.cambiar_estado(
+            f(c), c["params"]["id"], c["json"].get("estado"), c["json"].get("observacion"))),
+        ("GET", r"/api/bandeja", lambda c: f(c) and p.solicitudes.bandeja()),
     ]
 
 
