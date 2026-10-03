@@ -15,6 +15,8 @@ versión desplegable, etiquetada y probada junto con todo lo entregado antes.
 
 Detalle de componentes nuevos y afectados por versión: [`docs/mapa-de-versiones.md`](docs/mapa-de-versiones.md).
 Movimientos de alcance entre incrementos: [`docs/registro-cambios-alcance.md`](docs/registro-cambios-alcance.md).
+Registro de riesgos del proyecto: [`docs/registro-riesgos.md`](docs/registro-riesgos.md).
+Alcance detallado por incremento: [`docs/alcance-funciones.md`](docs/alcance-funciones.md).
 
 ## Cómo ejecutar
 
