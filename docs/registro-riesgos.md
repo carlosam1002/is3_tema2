@@ -31,7 +31,7 @@ elevar un riesgo de categoría, como ocurre con R-07.
 | R-09 | Estimaciones cortas por productividad supuesta | Gestión · estimación | 3 | 2 | 6 | Alta | Mitigar | Líder | Materializado en I1; recalibrado | Materializado |
 | R-10 | Ausencia prolongada de un rol clave | Organizacional · personas | 2 | 3 | 6 | Alta | Mitigar | Líder | Se controla en los tres incrementos | Activo |
 | R-11 | Baja adopción: se sigue usando la ventanilla | Adopción | 3 | 2 | 6 | Alta | Mitigar | Líder | Se mide desde I1; crítico en I2 | Activo |
-| R-12 | Indisponibilidad del proveedor de correo | Dependencia externa | 2 | 2 | 4 | Media | Transferir y mitigar | Integración | Se reduce en I3 | Activo |
+| R-12 | Indisponibilidad del proveedor de correo | Dependencia externa | 2 | 2 | 4 | Media | Transferir y mitigar | Integración | Materializado en S7 | Materializado |
 | O-01 | Oportunidad: reutilizar las notificaciones para avisos académicos | Oportunidad | 2 | 2 | 4 | Media | Explotar | Arquitecto | Se evalúa al cierre de I3 | Abierta |
 
 ## Fichas de los riesgos de prioridad crítica y alta
@@ -130,6 +130,14 @@ elevar un riesgo de categoría, como ocurre con R-07.
 - **Contingencia:** campaña con el Centro de Estudiantes y acompañamiento en ventanilla por dos semanas.
 - **Indicador:** porcentaje de trámites iniciados en línea y consultas resueltas en el portal.
 
+### R-12 · Indisponibilidad del proveedor de correo (materializado)
+
+- **Qué pasó:** en S7, antes de iniciar I2, el proveedor informó que su API no estaría disponible durante cuatro semanas.
+- **Respuesta ejecutada:** se activó el plan de contingencia previsto y se construyó el adaptador al servidor de correo institucional (`portal/adaptadores/smtp_institucional.py`), liberado como v1.2.1. El servicio de notificaciones no cambió porque el adaptador cumple el mismo contrato.
+- **Impacto:** +3 PF en I3 y, por la regla R-MA, F3.13 pasa a v1.3.0 (RCA-04). El esfuerzo de I3 queda en 902,9 h (7,85 semanas), ligeramente por debajo del pronóstico anterior.
+- **Riesgo residual:** bajo; el correo institucional tiene un límite de 200 envíos por hora que el servicio controla con su cola de pendientes.
+- **Riesgo secundario:** depender del correo institucional traslada la disponibilidad a la Dirección TIC, que no tiene acuerdo de nivel de servicio escrito.
+
 ## Riesgos adelantados a incrementos previos
 
 | Riesgo | Mecanismo | Cuándo | Evidencia |
@@ -143,3 +151,4 @@ elevar un riesgo de categoría, como ocurre con R-07.
 | Fecha | Revisión | Cambios |
 |---|---|---|
 | Cierre de I1 (S6) | 1.0 | Alta del registro con 12 riesgos y 1 oportunidad. R-02 y R-09 pasan a materializados; se recalibra el pronóstico y se registran RCA-01 a RCA-03. |
+| Evento de cambio (S7) | 1.1 | R-12 se materializa y se cierra con el adaptador institucional (v1.2.1). Se registra RCA-04 y se ajustan el pronóstico de I3 y el contenido de v1.3.0. |

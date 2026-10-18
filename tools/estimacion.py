@@ -159,3 +159,14 @@ if __name__ == "__main__":
         print(f"{a['inc']}: sigma/PERT original={a['S']/a['E']*100:.1f}%  recalibrado={b['S']/b['E']*100:.1f}%")
     costo_total_recal = (total_real * TARIFA + INFRA_SEM * 6) + i2["costo"] + i3["costo"]
     print(f"Costo total recalibrado (I1 real + I2 + I3) = {costo_total_recal/1e6:.1f} MGs")
+
+    # ---- Evento de cambio (Unidad 9): el proveedor de notificaciones no estara
+    # disponible por cuatro semanas. Se construye un adaptador al correo institucional
+    # (+3 PF en I3) y, por la regla R-MA, F3.13 (bandeja de notificaciones, 4 PF) pasa
+    # a v1.3.0 para no superar la ventana de 8 semanas.
+    pf_i3_evento = pf_i3 + 3 - PESOS["EQ"]  # +adaptador SMTP, -F3.13 (EQ, 4 PF)
+    i3_ev = fila("I3", pf_i3_evento, 62 + pf_i2, 0, PROD_RECAL, cap2)
+    imprimir("I3 TRAS EL EVENTO DE CAMBIO", [i3_ev], cap2)
+    v13_ev = fila("v1.3", 5 + PESOS["EQ"], 0, 0, PROD_RECAL, cap2)
+    print(f"v1.3.0 (reporte de uso + bandeja de notificaciones): PERT={v13_ev['E']:.1f} h sem={v13_ev['sem']:.2f}")
+    print(f"Diferencia de esfuerzo en I3 por el evento: {i3_ev['E'] - i3['E']:+.1f} h")

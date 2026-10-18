@@ -11,7 +11,8 @@ versión desplegable, etiquetada y probada junto con todo lo entregado antes.
 | `v1.0.0` | I1 | Autenticación SSO, perfil y consultas académicas | Liberado |
 | `v1.1.0` | I2 | Solicitudes de trámites y seguimiento | Liberado |
 | `v1.2.0` | I3 | Pagos, notificaciones y reportes | Liberado |
-| `v1.3.0` | — | Reporte de uso del portal (movido por RCA-03) | Planificado |
+| `v1.2.1` | I3 | Notificaciones por el correo institucional (evento de cambio, R-12) | Liberado |
+| `v1.3.0` | — | Reporte de uso del portal y bandeja de notificaciones (RCA-03 y RCA-04) | Planificado |
 
 Detalle de componentes nuevos y afectados por versión: [`docs/mapa-de-versiones.md`](docs/mapa-de-versiones.md).
 Movimientos de alcance entre incrementos: [`docs/registro-cambios-alcance.md`](docs/registro-cambios-alcance.md).

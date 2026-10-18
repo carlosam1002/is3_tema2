@@ -2,6 +2,15 @@
 
 Formato basado en *Keep a Changelog*; versionado semántico.
 
+## [1.2.1] - Evento de cambio: proveedor de notificaciones no disponible
+
+### Cambiado
+- Las notificaciones se envían a través del servidor de correo institucional mediante un adaptador nuevo (`adaptadores/smtp_institucional.py`), después de que el proveedor externo informara que su API no estaría disponible por cuatro semanas (riesgo R-12 materializado).
+- El servicio de notificaciones no se modificó: cumple el mismo contrato de interfaz, por lo que el cambio es de implementación y sube la versión de PARCHE.
+
+### Agregado
+- Pruebas de contrato del adaptador institucional y de conmutación de proveedor sin perder notificaciones pendientes (`tests/test_evento_cambio_correo.py`).
+
 ## [1.2.0] - Incremento 3: pagos, notificaciones y reportes
 
 ### Agregado
