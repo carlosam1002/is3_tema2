@@ -21,6 +21,7 @@ Alcance detallado por incremento: [`docs/alcance-funciones.md`](docs/alcance-fun
 EDT y diccionario de paquetes: [`docs/edt.md`](docs/edt.md) · Dependencias: [`docs/dependencias.md`](docs/dependencias.md).
 Calidad y plan de pruebas: [`docs/plan-de-pruebas.md`](docs/plan-de-pruebas.md) · Configuración y entrega: [`docs/configuracion-y-entrega.md`](docs/configuracion-y-entrega.md).
 Tablero de métricas y mejora: [`docs/metricas.md`](docs/metricas.md) · Trazabilidad de la entrega: [`docs/trazabilidad.md`](docs/trazabilidad.md).
+Verificación del informe contra las estimaciones: `python tools/verificar_informe.py <informe.pdf>` (requiere `pdftotext`).
 
 ## Cómo ejecutar
 
