@@ -18,6 +18,9 @@ Detalle de componentes nuevos y afectados por versión: [`docs/mapa-de-versiones
 Movimientos de alcance entre incrementos: [`docs/registro-cambios-alcance.md`](docs/registro-cambios-alcance.md).
 Registro de riesgos del proyecto: [`docs/registro-riesgos.md`](docs/registro-riesgos.md).
 Alcance detallado por incremento: [`docs/alcance-funciones.md`](docs/alcance-funciones.md).
+EDT y diccionario de paquetes: [`docs/edt.md`](docs/edt.md) · Dependencias: [`docs/dependencias.md`](docs/dependencias.md).
+Calidad y plan de pruebas: [`docs/plan-de-pruebas.md`](docs/plan-de-pruebas.md) · Configuración y entrega: [`docs/configuracion-y-entrega.md`](docs/configuracion-y-entrega.md).
+Tablero de métricas y mejora: [`docs/metricas.md`](docs/metricas.md).
 
 ## Cómo ejecutar
 
