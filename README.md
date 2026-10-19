@@ -1,8 +1,11 @@
 # Portal de Servicios Estudiantiles
 
-Prototipo verificable del **TP 2 — Enfoque Incremental** (Ingeniería de Software III, LCIK).
-El repositorio materializa el plan de releases del informe: cada incremento es una
-versión desplegable, etiquetada y probada junto con todo lo entregado antes.
+Prototipo verificable del **TP 2 — Enfoque Incremental** (Ingeniería de Software III, LCIK),
+entrega de las **Unidades 2 a 9**. El repositorio materializa el plan de releases del informe:
+cada incremento es una versión desplegable, etiquetada y probada junto con todo lo entregado
+antes, y cada unidad deja aquí el artefacto con el que se verifica lo que el informe afirma.
+
+Integrantes: Carlos Francisco Arguello Monges y Rodney Rodriguez.
 
 ## Plan de releases
 
@@ -14,14 +17,24 @@ versión desplegable, etiquetada y probada junto con todo lo entregado antes.
 | `v1.2.1` | I3 | Notificaciones por el correo institucional (evento de cambio, R-12) | Liberado |
 | `v1.3.0` | — | Reporte de uso del portal y bandeja de notificaciones (RCA-03 y RCA-04) | Planificado |
 
-Detalle de componentes nuevos y afectados por versión: [`docs/mapa-de-versiones.md`](docs/mapa-de-versiones.md).
-Movimientos de alcance entre incrementos: [`docs/registro-cambios-alcance.md`](docs/registro-cambios-alcance.md).
-Registro de riesgos del proyecto: [`docs/registro-riesgos.md`](docs/registro-riesgos.md).
-Alcance detallado por incremento: [`docs/alcance-funciones.md`](docs/alcance-funciones.md).
-EDT y diccionario de paquetes: [`docs/edt.md`](docs/edt.md) · Dependencias: [`docs/dependencias.md`](docs/dependencias.md).
-Calidad y plan de pruebas: [`docs/plan-de-pruebas.md`](docs/plan-de-pruebas.md) · Configuración y entrega: [`docs/configuracion-y-entrega.md`](docs/configuracion-y-entrega.md).
-Tablero de métricas y mejora: [`docs/metricas.md`](docs/metricas.md) · Trazabilidad de la entrega: [`docs/trazabilidad.md`](docs/trazabilidad.md).
-Verificación del informe contra las estimaciones: `python tools/verificar_informe.py <informe.pdf>` (requiere `pdftotext`).
+## Documentación por unidad
+
+| Unidad | Qué aporta | Artefacto |
+|---|---|---|
+| 2 · Enfoque | Componentes nuevos y afectados por versión | [`docs/mapa-de-versiones.md`](docs/mapa-de-versiones.md) |
+| 3 · Planificación | Alcance por función (43 ítems) | [`docs/alcance-funciones.md`](docs/alcance-funciones.md) |
+| 3 · Planificación | EDT con su diccionario y dependencias | [`docs/edt.md`](docs/edt.md) · [`docs/dependencias.md`](docs/dependencias.md) |
+| 3 · Planificación | Movimientos de alcance entre incrementos (RCA-01 a RCA-04) | [`docs/registro-cambios-alcance.md`](docs/registro-cambios-alcance.md) |
+| 4 · Estimación | Script que reproduce todas las cifras del informe | [`tools/estimacion.py`](tools/estimacion.py) |
+| 6 · Riesgos | Registro de 13 entradas con respuesta, disparador e indicador | [`docs/registro-riesgos.md`](docs/registro-riesgos.md) |
+| 7 · Calidad | Plan de pruebas, matriz de calidad y deuda técnica | [`docs/plan-de-pruebas.md`](docs/plan-de-pruebas.md) |
+| 8 · Configuración y DevOps | Líneas base, versionado, ambientes y pipeline | [`docs/configuracion-y-entrega.md`](docs/configuracion-y-entrega.md) |
+| 9 · Monitoreo y mejora | Tablero, fichas de métrica y lecciones convertidas en ajustes | [`docs/metricas.md`](docs/metricas.md) |
+| 2 a 9 | Trazabilidad unidad → sección del informe → evidencia | [`docs/trazabilidad.md`](docs/trazabilidad.md) |
+
+La Unidad 5 (personas y comunicación) no deja artefacto de código: se resuelve íntegramente en el informe.
+Para contrastar el informe contra las estimaciones: `python tools/verificar_informe.py <informe.pdf>`
+(requiere `pdftotext`); compara 16 cifras clave y falla si alguna difiere.
 
 ## Cómo ejecutar
 
