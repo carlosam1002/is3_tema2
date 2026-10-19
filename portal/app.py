@@ -3,6 +3,7 @@
 Ejecutar:  python -m portal.app  (escucha en http://127.0.0.1:8080)
 """
 import json
+import pathlib
 import re
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
@@ -15,7 +16,7 @@ from .adaptadores.proveedor_correo import ProveedorCorreoSimulado
 from .adaptadores.sso import DirectorioSimulado
 from .auditoria import RegistroAuditoria
 from .consultas import ServicioConsultas
-from .errores import ErrorPortal
+from .errores import ErrorPortal, NoEncontrado
 from .identidad import ServicioIdentidad
 from .notificaciones import ServicioNotificaciones
 from .pagos import ServicioPagos
@@ -69,6 +70,30 @@ def _publico(transaccion):
     return {"referencia": transaccion["referencia"], "estado": transaccion["estado"]}
 
 
+_PAGINA = pathlib.Path(__file__).parent / "web" / "index.html"
+
+
+def _pagina():
+    """Interfaz web del portal (capa de presentacion; consume la misma API)."""
+    return _PAGINA.read_text(encoding="utf-8")
+
+
+def _simular_pasarela(p, c):
+    """Sustituye, solo en la demostracion, la pagina de pago alojada por la pasarela.
+
+    La pasarela real redirige al estudiante a su propia pagina y luego llama al
+    callback publico /api/pagos/confirmacion con la notificacion firmada. Como aqui
+    la pasarela esta simulada, esta ruta genera esa notificacion firmada y la entrega
+    al mismo callback, sin saltearse ninguna validacion del servicio de pagos.
+    """
+    referencia = c["json"].get("referencia")
+    transaccion = next((t for t in p.pagos.transacciones() if t["referencia"] == referencia), None)
+    if transaccion is None:
+        raise NoEncontrado("Transacción inexistente")
+    notificacion = p.pasarela.simular_pago(transaccion["id_orden"], c["json"].get("aprobado", True))
+    return _publico(p.pagos.confirmar(notificacion))
+
+
 def construir_rutas(p):
     """Tabla de rutas: (metodo, patron, funcion(ctx) -> respuesta)."""
     idn = p.identidad
@@ -80,6 +105,7 @@ def construir_rutas(p):
         return idn.exigir_rol(c["token"], "funcionario")["usuario"]
 
     return [
+        ("GET", r"/", lambda c: _pagina()),
         ("GET", r"/salud", lambda c: p.salud()),
         # I1 - identidad
         ("POST", r"/api/sesion", lambda c: {"token": idn.iniciar_sesion(c["json"].get("usuario"), c["json"].get("clave"))}),
@@ -119,6 +145,8 @@ def construir_rutas(p):
         ("GET", r"/api/reportes/tramites", lambda c: f(c) and p.reportes.tramites()),
         ("GET", r"/api/reportes/recaudacion", lambda c: f(c) and p.reportes.recaudacion()),
         ("POST", r"/api/notificaciones/(?P<id>\d+)/leida", lambda c: p.notificaciones.marcar_leida(u(c), c["params"]["id"])),
+        # Solo para la demostracion: simula que el estudiante paga en la pagina de la pasarela
+        ("POST", r"/api/simulacion/pasarela", lambda c: u(c) and _simular_pasarela(p, c)),
     ]
 
 
@@ -145,6 +173,8 @@ def crear_servidor(portal=None, host="127.0.0.1", puerto=8080):
         def _responder(self, codigo, datos):
             if isinstance(datos, (bytes, bytearray)):
                 cuerpo, tipo = bytes(datos), "application/pdf"
+            elif isinstance(datos, str):
+                cuerpo, tipo = datos.encode("utf-8"), "text/html; charset=utf-8"
             else:
                 cuerpo, tipo = json.dumps(datos, ensure_ascii=False).encode(), "application/json; charset=utf-8"
             self.send_response(codigo)

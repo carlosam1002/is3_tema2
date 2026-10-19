@@ -1,0 +1,478 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Portal de Servicios Estudiantiles</title>
+<style>
+  :root{
+    --azul:#1f3864; --azul2:#2e74b5; --gris:#595959; --borde:#d8dee8;
+    --fondo:#f4f6fa; --panel:#ffffff; --ok:#1baf7a; --alerta:#eb6834; --suave:#eef3fa;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Segoe UI",Calibri,system-ui,sans-serif;background:var(--fondo);color:#1b1f27;font-size:15px}
+  header{background:var(--azul);color:#fff;padding:14px 24px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+  header h1{font-size:18px;margin:0;font-weight:600;letter-spacing:.2px}
+  header .sub{font-size:12.5px;opacity:.8}
+  header .der{margin-left:auto;display:flex;align-items:center;gap:12px;font-size:13px}
+  .chip{background:rgba(255,255,255,.16);padding:3px 9px;border-radius:99px;font-size:12px}
+  button{font:inherit;cursor:pointer;border-radius:6px;border:1px solid var(--azul2);background:var(--azul2);color:#fff;padding:7px 14px}
+  button:hover{filter:brightness(1.08)}
+  button.sec{background:#fff;color:var(--azul2)}
+  button.mini{padding:4px 9px;font-size:13px}
+  button:disabled{opacity:.5;cursor:default}
+  main{max-width:1060px;margin:22px auto;padding:0 18px}
+  nav{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
+  nav button{background:#fff;color:var(--gris);border:1px solid var(--borde)}
+  nav button.activo{background:var(--azul2);color:#fff;border-color:var(--azul2)}
+  .panel{background:var(--panel);border:1px solid var(--borde);border-radius:10px;padding:18px 20px;margin-bottom:16px}
+  .panel h2{margin:0 0 4px;font-size:16px;color:var(--azul)}
+  .panel p.ayuda{margin:0 0 14px;color:var(--gris);font-size:13.5px}
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--borde);vertical-align:top}
+  th{background:var(--suave);color:var(--azul);font-weight:600;font-size:13px}
+  tr:last-child td{border-bottom:none}
+  .vacio{color:var(--gris);font-style:italic;padding:10px 0;font-size:14px}
+  label{display:block;font-size:13px;color:var(--gris);margin:10px 0 4px}
+  input,select,textarea{width:100%;padding:8px 10px;border:1px solid var(--borde);border-radius:6px;font:inherit;background:#fff}
+  textarea{min-height:64px;resize:vertical}
+  .fila{display:flex;gap:14px;flex-wrap:wrap}
+  .fila>div{flex:1;min-width:190px}
+  .estado{display:inline-block;padding:2px 9px;border-radius:99px;font-size:12px;background:var(--suave);color:var(--azul2);white-space:nowrap}
+  .estado.ok{background:#e4f6ef;color:#128a5f}
+  .estado.mal{background:#fdeae1;color:#c04a1c}
+  .dato{font-size:14px;margin:3px 0}
+  .dato b{color:var(--azul)}
+  #acceso{max-width:380px;margin:60px auto}
+  #aviso{position:fixed;right:18px;bottom:18px;max-width:340px;padding:12px 16px;border-radius:8px;color:#fff;display:none;font-size:14px;box-shadow:0 4px 14px rgba(0,0,0,.18)}
+  .oculto{display:none !important}
+  .pie{max-width:1060px;margin:0 auto 30px;padding:0 18px;color:var(--gris);font-size:12.5px;line-height:1.5}
+  .kpi{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:6px}
+  .kpi div{flex:1;min-width:150px;background:var(--suave);border-radius:8px;padding:12px 14px}
+  .kpi span{display:block;font-size:12.5px;color:var(--gris)}
+  .kpi b{font-size:20px;color:var(--azul)}
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>Portal de Servicios Estudiantiles</h1>
+    <div class="sub">Facultad Politécnica · UNA</div>
+  </div>
+  <div class="der">
+    <span class="chip" id="version">—</span>
+    <span id="quien" class="oculto"></span>
+    <button class="sec oculto" id="salir">Cerrar sesión</button>
+  </div>
+</header>
+
+<main>
+  <!-- ACCESO -->
+  <section id="acceso" class="panel">
+    <h2>Iniciar sesión</h2>
+    <p class="ayuda">Acceso con la credencial institucional (SSO simulado).</p>
+    <label for="usuario">Usuario</label>
+    <input id="usuario" value="est001" autocomplete="username">
+    <label for="clave">Clave</label>
+    <input id="clave" type="password" value="clave-est001" autocomplete="current-password">
+    <div style="margin-top:14px;display:flex;gap:8px">
+      <button id="entrar">Entrar</button>
+      <button class="sec" id="comoFuncionario">Entrar como funcionario</button>
+    </div>
+  </section>
+
+  <!-- APLICACIÓN -->
+  <div id="app" class="oculto">
+    <nav id="menu"></nav>
+
+    <section id="vista-perfil" class="vista panel oculto">
+      <h2>Mi perfil</h2>
+      <p class="ayuda">Datos traídos del sistema académico y contacto editable por el estudiante.</p>
+      <div id="perfil"></div>
+      <div class="fila" style="margin-top:12px">
+        <div><label for="telefono">Teléfono</label><input id="telefono" placeholder="0981 000 000"></div>
+        <div><label for="correoAlt">Correo alternativo</label><input id="correoAlt" placeholder="nombre@correo.com"></div>
+      </div>
+      <div style="margin-top:12px"><button id="guardarContacto">Guardar contacto</button></div>
+    </section>
+
+    <section id="vista-consultas" class="vista panel oculto">
+      <h2>Consultas académicas</h2>
+      <p class="ayuda">Lectura del sistema académico institucional.</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+        <button class="sec mini" data-consulta="calificaciones">Calificaciones</button>
+        <button class="sec mini" data-consulta="horario">Horario</button>
+        <button class="sec mini" data-consulta="historial">Avance de malla</button>
+        <button class="sec mini" data-consulta="inscripcion">Inscripción</button>
+      </div>
+      <div id="consultaResultado"></div>
+    </section>
+
+    <section id="vista-tramites" class="vista oculto">
+      <div class="panel">
+        <h2>Nueva solicitud</h2>
+        <p class="ayuda">El número de expediente lo asigna el sistema de Mesa de Entrada.</p>
+        <div class="fila">
+          <div><label for="tramite">Trámite</label><select id="tramite"></select></div>
+          <div><label for="adjunto">Adjunto (opcional según el trámite)</label><input id="adjunto" placeholder="respaldo.pdf"></div>
+        </div>
+        <label for="descripcion">Descripción</label>
+        <textarea id="descripcion" placeholder="Motivo de la solicitud"></textarea>
+        <div style="margin-top:12px"><button id="crearSolicitud">Enviar solicitud</button></div>
+      </div>
+      <div class="panel">
+        <h2>Mis solicitudes</h2>
+        <div id="misSolicitudes"></div>
+      </div>
+    </section>
+
+    <section id="vista-pagos" class="vista oculto">
+      <div class="panel">
+        <h2>Estado de cuenta</h2>
+        <p class="ayuda">El pago ocurre en la página de la pasarela: el portal no recibe ni guarda datos de tarjeta.</p>
+        <div id="estadoCuenta"></div>
+      </div>
+      <div class="panel">
+        <h2>Historial de pagos</h2>
+        <div id="historialPagos"></div>
+      </div>
+    </section>
+
+    <section id="vista-notificaciones" class="vista panel oculto">
+      <h2>Notificaciones</h2>
+      <p class="ayuda">Avisos de cambios de estado y confirmaciones de pago (v1.2.1: envío por el correo institucional).</p>
+      <div id="notificaciones"></div>
+    </section>
+
+    <section id="vista-bandeja" class="vista panel oculto">
+      <h2>Bandeja de trámites</h2>
+      <p class="ayuda">Pendientes ordenadas por vencimiento, con control de plazos.</p>
+      <div id="bandeja"></div>
+    </section>
+
+    <section id="vista-reportes" class="vista oculto">
+      <div class="panel">
+        <h2>Reporte de trámites</h2>
+        <div id="reporteTramites"></div>
+      </div>
+      <div class="panel">
+        <h2>Reporte de recaudación</h2>
+        <div id="reporteRecaudacion"></div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<div class="pie">
+  Prototipo del TP 2 — Enfoque Incremental. Los servicios institucionales (SSO, sistema académico,
+  expedientes, pasarela de pagos y correo) están simulados mediante adaptadores que respetan su
+  contrato de interfaz; los datos son ficticios. Esta pantalla es la capa de presentación y consume
+  la misma API que verifica la suite de pruebas.
+</div>
+
+<div id="aviso"></div>
+
+<script>
+const estado = { token: null, usuario: null, rol: null };
+
+function aviso(texto, error) {
+  const a = document.getElementById("aviso");
+  a.textContent = texto;
+  a.style.background = error ? "#c0392b" : "#1baf7a";
+  a.style.display = "block";
+  clearTimeout(a._t);
+  a._t = setTimeout(() => (a.style.display = "none"), 3800);
+}
+
+async function api(metodo, ruta, cuerpo) {
+  const opciones = { method: metodo, headers: {} };
+  if (estado.token) opciones.headers["Authorization"] = "Bearer " + estado.token;
+  if (cuerpo !== undefined) {
+    opciones.headers["Content-Type"] = "application/json";
+    opciones.body = JSON.stringify(cuerpo);
+  }
+  const r = await fetch(ruta, opciones);
+  const datos = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(datos.error || ("Error " + r.status));
+  return datos;
+}
+
+const gs = (n) => "Gs. " + Number(n).toLocaleString("es-PY");
+const fecha = (seg) => new Date(seg * 1000).toLocaleString("es-PY");
+const esc = (t) => String(t ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+function tabla(columnas, filas, vacio) {
+  if (!filas.length) return `<div class="vacio">${vacio}</div>`;
+  return `<table><thead><tr>${columnas.map((c) => `<th>${c}</th>`).join("")}</tr></thead>
+    <tbody>${filas.map((f) => `<tr>${f.map((c) => `<td>${c}</td>`).join("")}</tr>`).join("")}</tbody></table>`;
+}
+
+const MENUS = {
+  estudiante: [["perfil", "Mi perfil"], ["consultas", "Consultas"], ["tramites", "Trámites"],
+               ["pagos", "Pagos"], ["notificaciones", "Notificaciones"]],
+  funcionario: [["bandeja", "Bandeja"], ["reportes", "Reportes"]],
+};
+
+const CARGAR = {
+  perfil: cargarPerfil, consultas: () => {}, tramites: cargarTramites,
+  pagos: cargarPagos, notificaciones: cargarNotificaciones,
+  bandeja: cargarBandeja, reportes: cargarReportes,
+};
+
+function mostrar(nombre) {
+  document.querySelectorAll(".vista").forEach((v) => v.classList.add("oculto"));
+  document.getElementById("vista-" + nombre).classList.remove("oculto");
+  document.querySelectorAll("#menu button").forEach((b) => b.classList.toggle("activo", b.dataset.vista === nombre));
+  Promise.resolve(CARGAR[nombre]()).catch((e) => aviso(e.message, true));
+}
+
+// ---------- acceso
+async function entrar(usuario, clave) {
+  try {
+    const r = await api("POST", "/api/sesion", { usuario, clave });
+    estado.token = r.token;
+    const sesion = await api("GET", "/api/sesion");
+    estado.usuario = sesion.usuario;
+    estado.rol = sesion.rol;
+    document.getElementById("acceso").classList.add("oculto");
+    document.getElementById("app").classList.remove("oculto");
+    document.getElementById("quien").textContent = `${sesion.usuario} · ${sesion.rol}`;
+    document.getElementById("quien").classList.remove("oculto");
+    document.getElementById("salir").classList.remove("oculto");
+    const menu = document.getElementById("menu");
+    menu.innerHTML = MENUS[sesion.rol].map(([v, t]) => `<button data-vista="${v}">${t}</button>`).join("");
+    menu.querySelectorAll("button").forEach((b) => (b.onclick = () => mostrar(b.dataset.vista)));
+    mostrar(MENUS[sesion.rol][0][0]);
+    aviso("Sesión iniciada como " + sesion.usuario);
+  } catch (e) { aviso(e.message, true); }
+}
+
+document.getElementById("entrar").onclick = () =>
+  entrar(document.getElementById("usuario").value.trim(), document.getElementById("clave").value);
+
+document.getElementById("comoFuncionario").onclick = () => {
+  document.getElementById("usuario").value = "fun001";
+  document.getElementById("clave").value = "clave-fun001";
+  entrar("fun001", "clave-fun001");
+};
+
+document.getElementById("clave").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") document.getElementById("entrar").click();
+});
+
+document.getElementById("salir").onclick = async () => {
+  try { await api("POST", "/api/sesion/cerrar"); } catch (e) { /* sesión ya vencida */ }
+  estado.token = estado.usuario = estado.rol = null;
+  document.getElementById("app").classList.add("oculto");
+  document.getElementById("acceso").classList.remove("oculto");
+  document.getElementById("quien").classList.add("oculto");
+  document.getElementById("salir").classList.add("oculto");
+  aviso("Sesión cerrada");
+};
+
+// ---------- perfil
+async function cargarPerfil() {
+  const p = await api("GET", "/api/perfil");
+  document.getElementById("perfil").innerHTML = `
+    <div class="dato"><b>Nombre:</b> ${esc(p.nombre)}</div>
+    <div class="dato"><b>Matrícula:</b> ${esc(p.matricula)}</div>
+    <div class="dato"><b>Carrera:</b> ${esc(p.carrera)}</div>
+    <div class="dato"><b>Correo institucional:</b> ${esc(p.correo_institucional)}</div>`;
+  document.getElementById("telefono").value = p.contacto?.telefono || "";
+  document.getElementById("correoAlt").value = p.contacto?.correo_alternativo || "";
+}
+
+document.getElementById("guardarContacto").onclick = async () => {
+  try {
+    await api("PUT", "/api/perfil/contacto", {
+      telefono: document.getElementById("telefono").value.trim(),
+      correo_alternativo: document.getElementById("correoAlt").value.trim(),
+    });
+    aviso("Contacto actualizado");
+    cargarPerfil();
+  } catch (e) { aviso(e.message, true); }
+};
+
+// ---------- consultas
+document.querySelectorAll("[data-consulta]").forEach((b) => {
+  b.onclick = async () => {
+    const destino = document.getElementById("consultaResultado");
+    try {
+      const d = await api("GET", "/api/consultas/" + b.dataset.consulta);
+      if (b.dataset.consulta === "calificaciones")
+        destino.innerHTML = tabla(["Materia", "Período", "Nota"],
+          d.map((x) => [esc(x.materia), esc(x.periodo), x.nota]), "Sin calificaciones cargadas.");
+      else if (b.dataset.consulta === "horario")
+        destino.innerHTML = tabla(["Materia", "Día", "Desde", "Hasta", "Aula"],
+          d.map((x) => [esc(x.materia), esc(x.dia), esc(x.desde), esc(x.hasta), esc(x.aula)]), "Sin horario cargado.");
+      else if (b.dataset.consulta === "historial")
+        destino.innerHTML = `<div class="kpi"><div><span>Materias aprobadas</span><b>${d.aprobadas.length}</b></div>
+          <div><span>Total de la malla</span><b>${d.total_malla}</b></div>
+          <div><span>Avance</span><b>${Math.round((d.aprobadas.length / d.total_malla) * 100)}%</b></div></div>
+          ${tabla(["Materia aprobada"], d.aprobadas.map((m) => [esc(m)]), "Todavía no hay materias aprobadas.")}`;
+      else
+        destino.innerHTML = `<div class="dato"><b>Período:</b> ${esc(d.periodo)}</div>
+          <div class="dato"><b>Estado:</b> <span class="estado ${d.estado === "confirmada" ? "ok" : ""}">${esc(d.estado)}</span></div>
+          ${tabla(["Materia inscripta"], d.materias.map((m) => [esc(m)]), "Sin materias inscriptas.")}`;
+    } catch (e) { aviso(e.message, true); }
+  };
+});
+
+// ---------- trámites
+let catalogo = [];
+async function cargarTramites() {
+  catalogo = await api("GET", "/api/tramites");
+  document.getElementById("tramite").innerHTML = catalogo
+    .map((t) => `<option value="${t.codigo}">${esc(t.nombre)} (${t.plazo_dias} días${t.requiere_adjunto ? ", requiere adjunto" : ""})</option>`)
+    .join("");
+  await cargarMisSolicitudes();
+}
+
+async function cargarMisSolicitudes() {
+  const s = await api("GET", "/api/solicitudes");
+  document.getElementById("misSolicitudes").innerHTML = tabla(
+    ["Nro.", "Trámite", "Expediente", "Estado", "Último movimiento", "Acciones"],
+    s.map((x) => {
+      const ultimo = x.linea_tiempo[x.linea_tiempo.length - 1];
+      const cancelable = ["recibida", "observada"].includes(x.estado);
+      return [x.id, esc(catalogo.find((t) => t.codigo === x.tramite)?.nombre || x.tramite),
+        esc(x.expediente || "pendiente"),
+        `<span class="estado ${x.estado === "resuelta" ? "ok" : x.estado === "rechazada" || x.estado === "cancelada" ? "mal" : ""}">${esc(x.estado)}</span>`,
+        `${esc(ultimo.estado)} · ${fecha(ultimo.momento)}${ultimo.observacion ? "<br><i>" + esc(ultimo.observacion) + "</i>" : ""}`,
+        `<a href="/api/solicitudes/${x.id}/comprobante.pdf" target="_blank"><button class="sec mini">Comprobante</button></a>
+         ${cancelable ? `<button class="sec mini" onclick="cancelar(${x.id})">Cancelar</button>` : ""}`];
+    }), "Todavía no enviaste ninguna solicitud.");
+}
+
+document.getElementById("crearSolicitud").onclick = async () => {
+  const adjunto = document.getElementById("adjunto").value.trim();
+  try {
+    const r = await api("POST", "/api/solicitudes", {
+      tramite: document.getElementById("tramite").value,
+      descripcion: document.getElementById("descripcion").value.trim(),
+      adjuntos: adjunto ? [{ nombre: adjunto, tamano: 120000 }] : [],
+    });
+    document.getElementById("descripcion").value = "";
+    document.getElementById("adjunto").value = "";
+    aviso("Solicitud " + r.id + " creada · expediente " + (r.expediente || "pendiente"));
+    cargarMisSolicitudes();
+  } catch (e) { aviso(e.message, true); }
+};
+
+window.cancelar = async (id) => {
+  try { await api("POST", `/api/solicitudes/${id}/cancelar`); aviso("Solicitud cancelada"); cargarMisSolicitudes(); }
+  catch (e) { aviso(e.message, true); }
+};
+
+// ---------- pagos
+async function cargarPagos() {
+  const cuenta = await api("GET", "/api/pagos/estado-cuenta");
+  document.getElementById("estadoCuenta").innerHTML =
+    `<div class="kpi"><div><span>Deuda total</span><b>${gs(cuenta.total)}</b></div></div>` +
+    tabla(["Concepto", "Vencimiento", "Monto", ""],
+      cuenta.deudas.map((d) => [esc(d.concepto), esc(d.vencimiento), gs(d.monto),
+        `<button class="mini" onclick="pagar('${d.id}')">Pagar</button>`]),
+      "No tenés deudas pendientes.");
+  await cargarHistorialPagos();
+}
+
+async function cargarHistorialPagos() {
+  const h = await api("GET", "/api/pagos");
+  document.getElementById("historialPagos").innerHTML = tabla(
+    ["Referencia", "Concepto", "Monto", "Estado", "Recibo", ""],
+    h.map((t) => [esc(t.referencia), esc(t.concepto), gs(t.monto),
+      `<span class="estado ${t.estado === "aprobado" ? "ok" : t.estado === "rechazado" ? "mal" : ""}">${esc(t.estado)}</span>`,
+      esc(t.recibo || "—"),
+      t.estado === "aprobado"
+        ? `<a href="/api/pagos/${t.referencia}/comprobante.pdf" target="_blank"><button class="sec mini">Comprobante</button></a>`
+        : ""]),
+    "Todavía no hay pagos registrados.");
+}
+
+window.pagar = async (idDeuda) => {
+  try {
+    const orden = await api("POST", "/api/pagos", { id_deuda: idDeuda });
+    aviso("Redirigiendo a la pasarela · " + orden.referencia);
+    const r = await api("POST", "/api/simulacion/pasarela", { referencia: orden.referencia, aprobado: true });
+    aviso("Pago " + r.estado + " · " + r.referencia);
+    cargarPagos();
+  } catch (e) { aviso(e.message, true); }
+};
+
+// ---------- notificaciones
+async function cargarNotificaciones() {
+  const n = await api("GET", "/api/notificaciones");
+  document.getElementById("notificaciones").innerHTML = tabla(
+    ["Asunto", "Mensaje", "Momento", "Envío", ""],
+    n.map((x) => [
+      `${x.leida ? "" : "<b>"}${esc(x.asunto)}${x.leida ? "" : "</b>"}`,
+      esc(x.cuerpo), fecha(x.momento),
+      `<span class="estado ${x.envio === "enviado" ? "ok" : x.envio === "pendiente" ? "mal" : ""}">${esc(x.envio)}</span>`,
+      x.leida ? "" : `<button class="sec mini" onclick="marcarLeida(${x.id})">Marcar leída</button>`]),
+    "No tenés notificaciones.");
+}
+
+window.marcarLeida = async (id) => {
+  try { await api("POST", `/api/notificaciones/${id}/leida`); cargarNotificaciones(); }
+  catch (e) { aviso(e.message, true); }
+};
+
+// ---------- funcionario
+const SIGUIENTES = {
+  recibida: ["en_revision", "rechazada"],
+  en_revision: ["observada", "resuelta", "rechazada"],
+  observada: ["en_revision"],
+};
+
+async function cargarBandeja() {
+  const b = await api("GET", "/api/bandeja");
+  document.getElementById("bandeja").innerHTML = tabla(
+    ["Nro.", "Trámite", "Expediente", "Estado", "Plazo", "Cambiar estado"],
+    b.map((s) => [s.id, esc(s.tramite), esc(s.expediente || "pendiente"),
+      `<span class="estado">${esc(s.estado)}</span>`,
+      s.vencida ? `<span class="estado mal">vencida</span>`
+                : `<span class="estado ok">${s.dias_restantes} días</span>`,
+      (SIGUIENTES[s.estado] || []).map((e) =>
+        `<button class="sec mini" onclick="cambiarEstado(${s.id},'${e}')">${e.replace("_", " ")}</button>`).join(" ")]),
+    "No hay trámites pendientes.");
+}
+
+window.cambiarEstado = async (id, nuevo) => {
+  let observacion = null;
+  if (nuevo === "observada" || nuevo === "rechazada") {
+    observacion = prompt("Observación para el estudiante (obligatoria):");
+    if (!observacion) return;
+  }
+  try {
+    await api("POST", `/api/solicitudes/${id}/estado`, { estado: nuevo, observacion });
+    aviso(`Solicitud ${id} → ${nuevo.replace("_", " ")}`);
+    cargarBandeja();
+  } catch (e) { aviso(e.message, true); }
+};
+
+async function cargarReportes() {
+  const t = await api("GET", "/api/reportes/tramites");
+  document.getElementById("reporteTramites").innerHTML =
+    `<div class="kpi"><div><span>Solicitudes</span><b>${t.total}</b></div>
+      <div><span>Vencidas</span><b>${t.vencidas}</b></div></div>` +
+    tabla(["Estado", "Cantidad"], Object.entries(t.por_estado).map(([k, v]) => [esc(k), v]), "Sin solicitudes.") +
+    tabla(["Trámite", "Días promedio de resolución"],
+      Object.entries(t.dias_promedio_resolucion).map(([k, v]) => [esc(k), v]),
+      "Todavía no hay solicitudes resueltas.");
+
+  const r = await api("GET", "/api/reportes/recaudacion");
+  document.getElementById("reporteRecaudacion").innerHTML =
+    `<div class="kpi"><div><span>Pagos aprobados</span><b>${r.cantidad_pagos}</b></div>
+      <div><span>Total recaudado</span><b>${gs(r.total)}</b></div></div>` +
+    tabla(["Concepto", "Monto"], Object.entries(r.por_concepto).map(([k, v]) => [esc(k), gs(v)]),
+      "Todavía no hay pagos aprobados.");
+}
+
+// ---------- inicio
+fetch("/salud").then((r) => r.json()).then((s) => {
+  document.getElementById("version").textContent = "v" + s.version;
+}).catch(() => {});
+</script>
+</body>
+</html>

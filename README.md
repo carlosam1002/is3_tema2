@@ -30,8 +30,19 @@ Requiere Python 3.10 o superior. No tiene dependencias externas.
 ```bash
 python -m unittest discover -s tests -t . -v   # suite completa (regresión acumulativa)
 python tools/estimacion.py                     # reproduce las estimaciones del informe
-python -m portal.app                           # API en http://127.0.0.1:8080/salud
+python -m portal.app                           # portal en http://127.0.0.1:8080
 ```
+
+Con el servidor levantado, `http://127.0.0.1:8080` abre la **interfaz web** del portal y
+`http://127.0.0.1:8080/salud` responde el estado y la versión. La interfaz es la capa de
+presentación: no tiene lógica propia, consume la misma API que verifica la suite de pruebas.
+Se agregó después de la etiqueta `v1.2.1` para la demostración, por lo que la suite verificada
+de esa versión sigue siendo de 60 pruebas. Los datos viven en memoria: al reiniciar el servidor
+el portal vuelve al estado inicial.
+
+Como la pasarela de pagos está simulada, la página de pago que alojaría el proveedor se
+reemplaza por la ruta `POST /api/simulacion/pasarela`, que genera la notificación firmada y la
+entrega al mismo callback público `POST /api/pagos/confirmacion`, sin saltear ninguna validación.
 
 Para ver una versión concreta: `git checkout v1.0.0` (o `v1.1.0`, `v1.2.0`) y ejecutar las pruebas.
 
