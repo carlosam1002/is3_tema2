@@ -133,6 +133,7 @@ def construir_rutas(p):
         ("POST", r"/api/solicitudes/(?P<id>\d+)/cancelar", lambda c: p.solicitudes.cancelar(u(c), c["params"]["id"])),
         # I3 - notificaciones
         ("GET", r"/api/notificaciones", lambda c: p.notificaciones.bandeja(u(c))),
+        ("GET", r"/api/notificaciones/preferencias", lambda c: p.notificaciones.preferencias(u(c))),
         ("PUT", r"/api/notificaciones/preferencias", lambda c: p.notificaciones.actualizar_preferencias(
             u(c), **_campos(c, "correo", "tipos"))),
         # I3 - pagos

@@ -36,12 +36,24 @@ La Unidad 5 (personas y comunicación) no deja artefacto de código: se resuelve
 Para contrastar el informe contra las estimaciones: `python tools/verificar_informe.py <informe.pdf>`
 (requiere `pdftotext`); compara 16 cifras clave y falla si alguna difiere.
 
+## Cobertura de las funciones del alcance
+
+De las 43 funciones de [`docs/alcance-funciones.md`](docs/alcance-funciones.md), el prototipo
+implementa 42, todas con prueba automatizada y todas accesibles desde la interfaz web.
+
+- **F3.16 Reporte de uso del portal** no está construida: la regla R-MA la movió a `v1.3.0`
+  (RCA-03). Es la única función planificada que falta, y falta a propósito.
+- **F3.13 Bandeja de notificaciones en el portal** figura diferida a `v1.3.0` por RCA-04, pero el
+  servicio de notificaciones expone su consulta desde `v1.2.0` y la interfaz la muestra. Es un
+  desvío de alcance en sentido contrario —se entregó más de lo comprometido— y se deja escrito
+  aquí para que la diferencia entre lo planificado y lo construido no quede oculta.
+
 ## Cómo ejecutar
 
 Requiere Python 3.10 o superior. No tiene dependencias externas.
 
 ```bash
-python -m unittest discover -s tests -t . -v   # suite completa (regresión acumulativa)
+python -m unittest discover -s tests -t . -v   # suite completa: 64 pruebas en main, 60 en v1.2.1
 python tools/estimacion.py                     # reproduce las estimaciones del informe
 python -m portal.app                           # portal en http://127.0.0.1:8080
 ```
@@ -49,8 +61,11 @@ python -m portal.app                           # portal en http://127.0.0.1:8080
 Con el servidor levantado, `http://127.0.0.1:8080` abre la **interfaz web** del portal y
 `http://127.0.0.1:8080/salud` responde el estado y la versión. La interfaz es la capa de
 presentación: no tiene lógica propia, consume la misma API que verifica la suite de pruebas.
-Se agregó después de la etiqueta `v1.2.1` para la demostración, por lo que la suite verificada
-de esa versión sigue siendo de 60 pruebas. Los datos viven en memoria: al reiniciar el servidor
+Desde ella se usa todo el producto: perfil y preferencias, consultas con descarga del historial en
+PDF, solicitudes con su línea de tiempo y comprobante, pagos, notificaciones con sus preferencias, y
+bandeja y reportes para el funcionario. Se agregó después de la etiqueta `v1.2.1`, por lo que la
+suite verificada de esa versión sigue siendo de 60 pruebas; en `main` son 64, porque la interfaz
+sumó las suyas en `tests/test_web_interfaz.py`. Los datos viven en memoria: al reiniciar el servidor
 el portal vuelve al estado inicial.
 
 Como la pasarela de pagos está simulada, la página de pago que alojaría el proveedor se

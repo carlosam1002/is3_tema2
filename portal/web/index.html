@@ -51,6 +51,13 @@
   .kpi div{flex:1;min-width:150px;background:var(--suave);border-radius:8px;padding:12px 14px}
   .kpi span{display:block;font-size:12.5px;color:var(--gris)}
   .kpi b{font-size:20px;color:var(--azul)}
+  details summary{cursor:pointer;color:var(--azul2)}
+  details ul{margin:6px 0 0;padding-left:18px;color:var(--gris)}
+  details li{margin:2px 0}
+  .sub-panel{border-top:1px solid var(--borde);margin-top:16px;padding-top:14px}
+  .sub-panel h3{margin:0 0 10px;font-size:14px;color:var(--azul)}
+  .check{display:flex;align-items:center;gap:8px;font-size:14px;color:#1b1f27;margin:6px 0}
+  .check input{width:auto}
 </style>
 </head>
 <body>
@@ -91,10 +98,20 @@
       <p class="ayuda">Datos traídos del sistema académico y contacto editable por el estudiante.</p>
       <div id="perfil"></div>
       <div class="fila" style="margin-top:12px">
-        <div><label for="telefono">Teléfono</label><input id="telefono" placeholder="0981 000 000"></div>
+        <div><label for="telefono">Teléfono</label><input id="telefono" placeholder="0981000000"></div>
         <div><label for="correoAlt">Correo alternativo</label><input id="correoAlt" placeholder="nombre@correo.com"></div>
       </div>
       <div style="margin-top:12px"><button id="guardarContacto">Guardar contacto</button></div>
+      <div class="sub-panel">
+        <h3>Preferencias del portal</h3>
+        <div class="fila">
+          <div><label for="idioma">Idioma</label>
+            <select id="idioma"><option value="es">Español</option><option value="gn">Guaraní</option></select></div>
+          <div><label for="vistaInicio">Pantalla de inicio</label>
+            <select id="vistaInicio"><option value="consultas">Consultas</option><option value="tramites">Trámites</option></select></div>
+        </div>
+        <div style="margin-top:12px"><button class="sec" id="guardarPreferencias">Guardar preferencias</button></div>
+      </div>
     </section>
 
     <section id="vista-consultas" class="vista panel oculto">
@@ -105,6 +122,7 @@
         <button class="sec mini" data-consulta="horario">Horario</button>
         <button class="sec mini" data-consulta="historial">Avance de malla</button>
         <button class="sec mini" data-consulta="inscripcion">Inscripción</button>
+        <button class="sec mini" id="historialPdf">Descargar historial en PDF</button>
       </div>
       <div id="consultaResultado"></div>
     </section>
@@ -143,6 +161,13 @@
       <h2>Notificaciones</h2>
       <p class="ayuda">Avisos de cambios de estado y confirmaciones de pago (v1.2.1: envío por el correo institucional).</p>
       <div id="notificaciones"></div>
+      <div class="sub-panel">
+        <h3>Preferencias de notificación</h3>
+        <label class="check"><input type="checkbox" id="prefCorreo"> Recibir también por correo</label>
+        <label class="check"><input type="checkbox" id="prefSolicitud" value="solicitud_estado"> Cambios de estado de solicitudes</label>
+        <label class="check"><input type="checkbox" id="prefPago" value="pago_confirmado"> Confirmaciones de pago</label>
+        <div style="margin-top:10px"><button class="sec" id="guardarPrefNotif">Guardar preferencias</button></div>
+      </div>
     </section>
 
     <section id="vista-bandeja" class="vista panel oculto">
@@ -197,6 +222,26 @@ async function api(metodo, ruta, cuerpo) {
   if (!r.ok) throw new Error(datos.error || ("Error " + r.status));
   return datos;
 }
+
+async function descargar(ruta, nombre) {
+  try {
+    const r = await fetch(ruta, { headers: { Authorization: "Bearer " + estado.token } });
+    if (!r.ok) {
+      const d = await r.json().catch(() => ({}));
+      throw new Error(d.error || "No se pudo generar el documento");
+    }
+    const url = URL.createObjectURL(await r.blob());
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = nombre;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+    aviso("Descargado " + nombre);
+  } catch (e) { aviso(e.message, true); }
+}
+window.descargar = descargar;
 
 const gs = (n) => "Gs. " + Number(n).toLocaleString("es-PY");
 const fecha = (seg) => new Date(seg * 1000).toLocaleString("es-PY");
@@ -281,18 +326,36 @@ async function cargarPerfil() {
     <div class="dato"><b>Correo institucional:</b> ${esc(p.correo_institucional)}</div>`;
   document.getElementById("telefono").value = p.contacto?.telefono || "";
   document.getElementById("correoAlt").value = p.contacto?.correo_alternativo || "";
+  document.getElementById("idioma").value = p.preferencias?.idioma || "es";
+  document.getElementById("vistaInicio").value = p.preferencias?.vista_inicio || "consultas";
 }
 
 document.getElementById("guardarContacto").onclick = async () => {
+  const cuerpo = {};
+  const tel = document.getElementById("telefono").value.trim();
+  const alt = document.getElementById("correoAlt").value.trim();
+  if (tel) cuerpo.telefono = tel;
+  if (alt) cuerpo.correo_alternativo = alt;
+  if (!tel && !alt) return aviso("Completá al menos un dato de contacto", true);
   try {
-    await api("PUT", "/api/perfil/contacto", {
-      telefono: document.getElementById("telefono").value.trim(),
-      correo_alternativo: document.getElementById("correoAlt").value.trim(),
-    });
+    await api("PUT", "/api/perfil/contacto", cuerpo);
     aviso("Contacto actualizado");
     cargarPerfil();
   } catch (e) { aviso(e.message, true); }
 };
+
+document.getElementById("guardarPreferencias").onclick = async () => {
+  try {
+    await api("PUT", "/api/perfil/preferencias", {
+      idioma: document.getElementById("idioma").value,
+      vista_inicio: document.getElementById("vistaInicio").value,
+    });
+    aviso("Preferencias guardadas");
+  } catch (e) { aviso(e.message, true); }
+};
+
+document.getElementById("historialPdf").onclick = () =>
+  descargar("/api/consultas/historial.pdf", "historial-academico.pdf");
 
 // ---------- consultas
 document.querySelectorAll("[data-consulta]").forEach((b) => {
@@ -336,11 +399,13 @@ async function cargarMisSolicitudes() {
     s.map((x) => {
       const ultimo = x.linea_tiempo[x.linea_tiempo.length - 1];
       const cancelable = ["recibida", "observada"].includes(x.estado);
+      const linea = x.linea_tiempo.map((e) =>
+        `<li>${esc(e.estado)} · ${fecha(e.momento)} · ${esc(e.por)}${e.observacion ? ` — <i>${esc(e.observacion)}</i>` : ""}</li>`).join("");
       return [x.id, esc(catalogo.find((t) => t.codigo === x.tramite)?.nombre || x.tramite),
         esc(x.expediente || "pendiente"),
         `<span class="estado ${x.estado === "resuelta" ? "ok" : x.estado === "rechazada" || x.estado === "cancelada" ? "mal" : ""}">${esc(x.estado)}</span>`,
-        `${esc(ultimo.estado)} · ${fecha(ultimo.momento)}${ultimo.observacion ? "<br><i>" + esc(ultimo.observacion) + "</i>" : ""}`,
-        `<a href="/api/solicitudes/${x.id}/comprobante.pdf" target="_blank"><button class="sec mini">Comprobante</button></a>
+        `<details><summary>${esc(ultimo.estado)} · ${fecha(ultimo.momento)}</summary><ul>${linea}</ul></details>`,
+        `<button class="sec mini" onclick="descargar('/api/solicitudes/${x.id}/comprobante.pdf','comprobante-solicitud-${x.id}.pdf')">Comprobante</button>
          ${cancelable ? `<button class="sec mini" onclick="cancelar(${x.id})">Cancelar</button>` : ""}`];
     }), "Todavía no enviaste ninguna solicitud.");
 }
@@ -385,7 +450,7 @@ async function cargarHistorialPagos() {
       `<span class="estado ${t.estado === "aprobado" ? "ok" : t.estado === "rechazado" ? "mal" : ""}">${esc(t.estado)}</span>`,
       esc(t.recibo || "—"),
       t.estado === "aprobado"
-        ? `<a href="/api/pagos/${t.referencia}/comprobante.pdf" target="_blank"><button class="sec mini">Comprobante</button></a>`
+        ? `<button class="sec mini" onclick="descargar('/api/pagos/${t.referencia}/comprobante.pdf','comprobante-${t.referencia}.pdf')">Comprobante</button>`
         : ""]),
     "Todavía no hay pagos registrados.");
 }
@@ -402,6 +467,12 @@ window.pagar = async (idDeuda) => {
 
 // ---------- notificaciones
 async function cargarNotificaciones() {
+  const pref = await api("GET", "/api/notificaciones/preferencias").catch(() => null);
+  if (pref) {
+    document.getElementById("prefCorreo").checked = !!pref.correo;
+    document.getElementById("prefSolicitud").checked = pref.tipos.includes("solicitud_estado");
+    document.getElementById("prefPago").checked = pref.tipos.includes("pago_confirmado");
+  }
   const n = await api("GET", "/api/notificaciones");
   document.getElementById("notificaciones").innerHTML = tabla(
     ["Asunto", "Mensaje", "Momento", "Envío", ""],
@@ -416,6 +487,18 @@ async function cargarNotificaciones() {
 window.marcarLeida = async (id) => {
   try { await api("POST", `/api/notificaciones/${id}/leida`); cargarNotificaciones(); }
   catch (e) { aviso(e.message, true); }
+};
+
+document.getElementById("guardarPrefNotif").onclick = async () => {
+  const tipos = [];
+  if (document.getElementById("prefSolicitud").checked) tipos.push("solicitud_estado");
+  if (document.getElementById("prefPago").checked) tipos.push("pago_confirmado");
+  try {
+    await api("PUT", "/api/notificaciones/preferencias", {
+      correo: document.getElementById("prefCorreo").checked, tipos,
+    });
+    aviso("Preferencias de notificación guardadas");
+  } catch (e) { aviso(e.message, true); }
 };
 
 // ---------- funcionario
